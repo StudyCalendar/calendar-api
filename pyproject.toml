@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "calendar"
+version = "0.0.3"
+description = "\"\""
+authors = ["Kikoring <kyr4624@gmail.com>"]
+readme = "README.md"
+packages = [{include = "poetry"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
