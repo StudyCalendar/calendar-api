@@ -9,6 +9,7 @@ packages = [{include = "poetry"}]
 [tool.poetry.dependencies]
 python = "^3.12"
 sqlalchemy = "^2.0.36"
+bcrypt = "^4.2.1"
 
 
 [build-system]

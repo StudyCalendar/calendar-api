@@ -11,7 +11,6 @@ db = create_engine(
 base = declarative_base()
 
 Session = sessionmaker(db)
-session = Session()
 
 
 # class User(base):
