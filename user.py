@@ -33,6 +33,11 @@ class UserCreate(BaseModel):
     password: str
 
 
+class Userlogin(BaseModel):
+    login_id: str
+    password: str
+
+
 base.metadata.create_all(db)
 
 
@@ -53,11 +58,35 @@ def user_create(user_create: UserCreate):
                 nickname=user_create.nickname,
                 login_id=user_create.login_id,
                 password=bcrypt.hashpw(
-                    user_create.password.encode('utf-8'), bcrypt.gensalt())
+                    user_create.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
             )
             session.add(new_user)
             session.commit()
 
             return {"status": "success", "message": "회원가입이 완료되었습니다."}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"오류 발생: {e}")
+
+
+@router.post("/login")
+def user_login(user_login: Userlogin):
+    with Session() as session:
+        try:
+            # 사용자 확인
+            stmt = select(User).where(User.login_id == user_login.login_id)
+            user = session.execute(stmt).scalar_one_or_none()
+
+            if not user:
+                raise HTTPException(status_code=401, detail="사용자를 찾을 수 없습니다.")
+
+            # 비밀번호 확인
+            if not bcrypt.checkpw(
+                user_login.password.encode(
+                    'utf-8'), user.password.encode('utf-8')
+            ):
+                raise HTTPException(status_code=401, detail="비밀번호가 잘못되었습니다.")
+
+            return {"message": "성공", "user_id": user.id}
+
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"오류 발생: {e}")
