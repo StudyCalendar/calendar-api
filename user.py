@@ -4,10 +4,14 @@ from sqlalchemy.orm import mapped_column, Mapped
 from sqlalchemy.sql import func
 from pydantic import BaseModel
 from nanoid import generate
-import datetime
+from datetime import timedelta
 from fastapi import APIRouter, HTTPException
 from db import db
+import jwt
+import os
 import bcrypt
+import datetime
+from enum import Enum
 
 router = APIRouter(
     prefix="/auth",
@@ -86,7 +90,25 @@ def user_login(user_login: Userlogin):
             ):
                 raise HTTPException(status_code=401, detail="비밀번호가 잘못되었습니다.")
 
-            return {"message": "성공", "user_id": user.id}
+            # 액세스 토큰발급
+            access_payload = {
+                "public_id": user.public_id,
+                "exp": datetime.datetime.now() + timedelta(minutes=30)
+            }
+
+            access_token = jwt.encode(
+                access_payload, os.getenv("ACCESS_SECRET_KEY"), algorithm='HS256')
+
+            # 리프레시 토큰발급
+            refresh_payload = {
+                "public_id": user.public_id,
+                "exp": datetime.datetime.now() + timedelta(days=7)
+            }
+
+            refresh_token = jwt.encode(
+                refresh_payload, os.getenv("REFRESH_SECRET_KEY"), algorithm='HS256')
+
+            return {"message": "성공", "access_token": access_token, "refresh_token": refresh_token}
 
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"오류 발생: {e}")

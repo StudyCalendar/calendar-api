@@ -10,6 +10,10 @@ packages = [{include = "poetry"}]
 python = "^3.12"
 sqlalchemy = "^2.0.36"
 bcrypt = "^4.2.1"
+datetime = "^5.5"
+pyjwt = "^2.10.1"
+api = "^0.0.7"
+fastapi-mail = "^1.4.2"
 
 
 [build-system]
