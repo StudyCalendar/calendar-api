@@ -5,6 +5,7 @@ description = "\"\""
 authors = ["Kikoring <kyr4624@gmail.com>"]
 readme = "README.md"
 packages = [{include = "poetry"}]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -14,6 +15,8 @@ datetime = "^5.5"
 pyjwt = "^2.10.1"
 api = "^0.0.7"
 fastapi-mail = "^1.4.2"
+fastapi = "^0.115.7"
+nanoid = "^2.0.0"
 
 
 [build-system]

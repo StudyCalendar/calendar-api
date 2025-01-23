@@ -11,7 +11,7 @@ from sqlalchemy.sql import func
 from nanoid import generate
 from fastapi import APIRouter, HTTPException
 from sqlalchemy.orm import mapped_column, Mapped
-from sqlalchemy import String, Boolean, DateTime, Sequence, Enum as SqlEnum, func, select, update, and_
+from sqlalchemy import String, DateTime, Sequence, Enum as SqlEnum, func, select, and_
 from db import Session, base
 
 

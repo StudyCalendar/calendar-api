@@ -1,5 +1,5 @@
 from db import Session, base
-from sqlalchemy import String, Boolean, Float, DateTime, Sequence, select, and_, update
+from sqlalchemy import String, DateTime, Sequence, select, and_
 from sqlalchemy.orm import mapped_column, Mapped
 from sqlalchemy.sql import func
 from pydantic import BaseModel
@@ -11,13 +11,11 @@ import jwt
 import os
 import bcrypt
 import datetime
-from enum import Enum
 from verification import Verifications, VerificationType
 
 router = APIRouter(
     prefix="/auth",
     tags=["Auth"],
-
 )
 
 # 기본 데이터베이스 테이블 생성
