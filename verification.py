@@ -21,10 +21,14 @@ router = APIRouter(
 
 )
 
+# 회원가입, 비밀번호 리셋 타입
+
 
 class VerificationType(Enum):
     register = "register"
     resetPassword = "resetPassword"
+
+# 인증 기본 데이터베이스 테이블생성
 
 
 class Verifications(base):
@@ -40,10 +44,14 @@ class Verifications(base):
     confirm: Mapped[bool] = mapped_column(default=False)
     code: Mapped[str] = mapped_column(String(6))
 
+# 이메일 인증 베이스모델
+
 
 class VerificationEmail(BaseModel):
     type: VerificationType
     email: str
+
+# 이메일 인증확인 베이스모델
 
 
 class Confirm(BaseModel):
@@ -51,13 +59,17 @@ class Confirm(BaseModel):
     code: str
 
 
+# 디비 생성
 base.metadata.create_all(db)
+
+# 이메일 인증발송 api
 
 
 @router.post("/email")
 def register(request: VerificationEmail):
     with Session() as session:
         try:
+            # 퍼블릭아이디, 코드 랜덤 생성, 타입지정, 이메일입력
             new_regiser = Verifications(
                 public_id=generate('0123456789abcdefghijklmnopqrstuvwxyz', 12),
                 code=generate('0123456789', 6),
@@ -67,6 +79,7 @@ def register(request: VerificationEmail):
             session.add(new_regiser)
             session.commit()
 
+            # 이메일 데이터
             SMTP_SSL_PORT = os.getenv("SENDER_SSL_PORT")
             SMTP_SERVER = os.getenv("SENDER_SERVER")
 
@@ -75,10 +88,12 @@ def register(request: VerificationEmail):
             context = ssl.create_default_context()
             receiver_email = request.email
 
+            # 이메일 코드
             with smtplib.SMTP_SSL(SMTP_SERVER, SMTP_SSL_PORT, context=context) as server:
                 server.login(sender_email, sender_password)
                 server.sendmail(sender_email, receiver_email, new_regiser.code)
 
+            # 이메일 토큰 발급
                 email_payload = {
                     "public_id": new_regiser.public_id,
                     "exp": datetime.datetime.now() + timedelta(minutes=5)}
@@ -86,23 +101,25 @@ def register(request: VerificationEmail):
                 email_token = jwt.encode(
                     email_payload, os.getenv("EMAIL_SECRET_KEY"), algorithm='HS256')
 
-                return {"status": "success", "message": "인증번호 발송완료.", "email_token": email_token}
+                return {"message": "success.", "data": {"email_token": email_token}}
 
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"오류 발생: {e}")
+
+# 이메일 인증번호 확인 api
 
 
 @router.post("/confirm")
 def confirm(request: Confirm):
     with Session() as session:
         try:
-            # 토큰 디코드
+            # email토큰 디코드
             email_payload = jwt.decode(request.email_token, os.getenv(
                 "EMAIL_SECRET_KEY"), algorithms=['HS256'])
 
             public_id: str = email_payload.get("public_id")
 
-            # 디코드 퍼블릭아이디 찾기
+            # email코드로 퍼블릭아이디 찾기
             stmt = select(Verifications).where(
                 and_(
                     Verifications.public_id == public_id,
@@ -119,20 +136,20 @@ def confirm(request: Confirm):
             if confirm_public_id.code != request.code:
                 raise HTTPException(status_code=401, detail="코드가 일치하지 않습니다.")
 
-            # 컴펌 트루로 변경
+            # confirm 트루로 변경
             confirm_public_id.confirm = True
 
             session.commit()
 
             # 코드 토큰 발급
             code_payload = {
-                "code": request.code,
-                "exp": datetime.datetime.now() + timedelta(minutes=5)}
+                "public_id": confirm_public_id.public_id,
+                "exp": datetime.datetime.now() + timedelta(minutes=30)}
 
             code_token = jwt.encode(
                 code_payload, os.getenv("CONFIRM_SECRET_KEY"), algorithm='HS256'
             )
 
-            return {"message": "성공", "code_token": code_token}
+            return {"message": "success", "data": {"code_token": code_token}}
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"오류 발생: {e}")
