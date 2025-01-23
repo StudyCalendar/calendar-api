@@ -1,0 +1,79 @@
+name: build
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.set-tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set tag
+        id: set-tag
+        run: echo "tag=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_OUTPUT
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.CR_PAT }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: ${{ steps.set-tag.outputs.tag }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          platforms: linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+
+  push:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: StudyCalendar/calendar-api-helm
+          ref: ${{ github.ref_name }}
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Set Git Config
+        run: |
+          git config --global user.name "actions@github.com"
+          git config --global user.email "GitHub Actions"
+
+      - name: Set Tag
+        run: |
+          sed -i 's|^  tag:.*|  tag: "${{ needs.build.outputs.tag }}"|' values.yaml
+
+      - name: Check if there are any changes
+        id: verify-diff
+        run: |
+          git diff --quiet . || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Push
+        if: steps.verify-diff.outputs.changed == 'true'
+        run: |
+          git add .
+          git commit -m "update: tag ${{ needs.build.outputs.tag }}"
+          git push
