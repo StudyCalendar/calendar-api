@@ -18,6 +18,7 @@ fastapi-mail = "^1.4.2"
 fastapi = "^0.115.7"
 nanoid = "^2.0.0"
 uvicorn = "^0.34.0"
+psycopg2-binary = "^2.9.10"
 
 
 [build-system]
