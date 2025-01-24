@@ -54,8 +54,8 @@ base.metadata.create_all(db)
 # 회원가입 api
 
 
-@router.post("/create")
-def user_create(user_create: UserCreate):
+@router.post("/register")
+def user_register(user_create: UserCreate):
     with Session() as session:
         try:
             # 중복 확인 쿼리 작성
@@ -76,7 +76,8 @@ def user_create(user_create: UserCreate):
                                                       Verifications.public_id == public_id,
                                                       Verifications.type == VerificationType.register,
                                                       Verifications.used == False,
-                                                      Verifications.confirm == True))
+                                                      Verifications.confirm == True,
+                                                      Verifications.target == user_create.email))
 
             existing_confirm = session.execute(confirm).scalar_one_or_none()
 
