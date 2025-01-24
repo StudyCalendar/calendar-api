@@ -17,6 +17,7 @@ api = "^0.0.7"
 fastapi-mail = "^1.4.2"
 fastapi = "^0.115.7"
 nanoid = "^2.0.0"
+uvicorn = "^0.34.0"
 
 
 [build-system]
